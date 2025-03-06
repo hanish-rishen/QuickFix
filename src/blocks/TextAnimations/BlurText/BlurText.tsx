@@ -8,23 +8,24 @@ import { useRef, useEffect, useState } from "react";
 import {
   useSprings,
   animated,
-  SpringValue,
   config as springConfig,
+  SpringValue,
 } from "@react-spring/web";
 
-// Define more specific types to match react-spring's expectations
+// Define animation props type
 type AnimationProps = {
-  filter?: string;
-  opacity?: number;
-  transform?: string;
-  [key: string]: string | number | undefined;
+  filter: string;
+  opacity: number;
+  transform: string;
 };
 
-type SpringAnimationFunction = (
-  next: (props: AnimationProps) => Promise<void>
-) => Promise<void>;
+type SpringAnimationNext = (props: Partial<AnimationProps>) => Promise<void>;
 
-type EasingFunction = (t: number) => number;
+type AnimatedStyles = {
+  filter: SpringValue<string>;
+  opacity: SpringValue<number>;
+  transform: SpringValue<string>;
+};
 
 interface BlurTextProps {
   text?: string;
@@ -34,9 +35,9 @@ interface BlurTextProps {
   direction?: "top" | "bottom";
   threshold?: number;
   rootMargin?: string;
-  animationFrom?: AnimationProps;
-  animationTo?: AnimationProps[];
-  easing?: string | EasingFunction;
+  animationFrom?: Partial<AnimationProps>;
+  animationTo?: Partial<AnimationProps>[];
+  easing?: keyof typeof springConfig | ((t: number) => number);
   onAnimationComplete?: () => void;
   fontSize?: string;
   fontWeight?: number;
@@ -62,18 +63,12 @@ const BlurText: React.FC<BlurTextProps> = ({
   const animatedCount = useRef(0);
 
   // Default animations based on direction
-  const defaultFrom: AnimationProps =
-    direction === "top"
-      ? {
-          filter: "blur(10px)",
-          opacity: 0,
-          transform: "translate3d(0,-50px,0)",
-        }
-      : {
-          filter: "blur(10px)",
-          opacity: 0,
-          transform: "translate3d(0,50px,0)",
-        };
+  const defaultFrom: AnimationProps = {
+    filter: "blur(10px)",
+    opacity: 0,
+    transform:
+      direction === "top" ? "translate3d(0,-50px,0)" : "translate3d(0,50px,0)",
+  };
 
   const defaultTo: AnimationProps[] = [
     {
@@ -82,7 +77,11 @@ const BlurText: React.FC<BlurTextProps> = ({
       transform:
         direction === "top" ? "translate3d(0,5px,0)" : "translate3d(0,-5px,0)",
     },
-    { filter: "blur(0px)", opacity: 1, transform: "translate3d(0,0,0)" },
+    {
+      filter: "blur(0px)",
+      opacity: 1,
+      transform: "translate3d(0,0,0)",
+    },
   ];
 
   useEffect(() => {
@@ -105,11 +104,12 @@ const BlurText: React.FC<BlurTextProps> = ({
     return () => observer.disconnect();
   }, [threshold, rootMargin]);
 
-  // Fixed useSprings call to match expected typing
-  const springs = useSprings(elements.length, (i) => ({
-    from: animationFrom || defaultFrom,
-    to: inView
-      ? async (next) => {
+  const springs = useSprings(
+    elements.length,
+    elements.map((_, i) => ({
+      from: animationFrom || defaultFrom,
+      to: async (next: SpringAnimationNext) => {
+        if (inView) {
           for (const step of animationTo || defaultTo) {
             await next(step);
           }
@@ -121,25 +121,28 @@ const BlurText: React.FC<BlurTextProps> = ({
             onAnimationComplete();
           }
         }
-      : animationFrom || defaultFrom,
-    delay: i * delay,
-    config:
-      typeof easing === "string" && easing in springConfig
-        ? springConfig[easing as keyof typeof springConfig]
-        : { easing: easing as EasingFunction },
-  }));
+      },
+      delay: i * delay,
+      config:
+        typeof easing === "string" && easing in springConfig
+          ? springConfig[easing as keyof typeof springConfig]
+          : { easing: easing as (t: number) => number },
+    }))
+  );
+
+  const AnimatedSpan = animated("span");
 
   return (
     <p ref={ref} className={`blur-text ${className} flex flex-wrap`}>
       {springs.map((style, index) => (
-        <animated.span
+        <AnimatedSpan
           key={index}
-          style={style}
+          style={style as unknown as AnimatedStyles}
           className="inline-block transition-transform will-change-[transform,filter,opacity]"
         >
           {elements[index] === " " ? "\u00A0" : elements[index]}
           {animateBy === "words" && index < elements.length - 1 && "\u00A0"}
-        </animated.span>
+        </AnimatedSpan>
       ))}
     </p>
   );

@@ -3,7 +3,6 @@
 import React, { useState } from "react";
 import { registerUser, signInWithGoogle } from "../../../lib/firebaseAuth";
 import { useRouter } from "next/navigation";
-import BlurText from "../../blocks/TextAnimations/BlurText/BlurText";
 import Link from "next/link";
 
 export default function SignUp() {
@@ -56,20 +55,18 @@ export default function SignUp() {
     <div className="min-h-screen flex flex-col items-center justify-center px-4 bg-gray-50">
       <div className="w-full max-w-md space-y-8">
         <div className="text-center">
-          <BlurText
-            text="Create your account"
-            fontSize="2.5rem"
-            fontWeight={700}
-            delay={300}
-            className="mb-2"
-          />
-          <BlurText
-            text="Join our community today"
-            fontSize="1.2rem"
-            fontWeight={400}
-            delay={600}
-            color="gray"
-          />
+          <h2 className="mt-6 text-3xl font-extrabold text-gray-900">
+            Create your account
+          </h2>
+          <p className="mt-2 text-sm text-gray-600">
+            Or{" "}
+            <Link
+              href="/signin"
+              className="font-medium text-blue-600 hover:text-blue-500"
+            >
+              sign in to your existing account
+            </Link>
+          </p>
         </div>
 
         {error && (
