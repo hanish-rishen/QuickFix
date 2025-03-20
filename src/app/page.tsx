@@ -118,7 +118,7 @@ export default function Home() {
                 <span className="ml-2 group-hover:ml-3 transition-all">→</span>
               </Link>
               <a
-                href="#features"
+                href="/features"
                 className="group px-8 py-4 bg-white/10 backdrop-blur-sm border border-gray-200/20 dark:border-white/10 text-gray-700 dark:text-gray-200 rounded-full transition-all hover:scale-105 hover:bg-white/20 text-lg font-medium"
               >
                 See Features
