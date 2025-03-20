@@ -6,10 +6,31 @@ import { useAuth } from "../../../../contexts/AuthContext";
 import { getUserBookingHistory } from "../../../../lib/firestoreService";
 import Link from "next/link";
 
+// Reuse the same interfaces we defined in the dashboard page
+interface Expert {
+  name?: string;
+  hourlyRate?: number;
+}
+
+interface FirestoreTimestamp {
+  toDate(): Date;
+}
+
+interface Booking {
+  id: string;
+  userId: string;
+  expertId: string;
+  serviceType: string;
+  status: "pending" | "completed" | "cancelled";
+  createdAt: Date | FirestoreTimestamp;
+  amount: number;
+  expert?: Expert | null;
+}
+
 export default function BookingHistory() {
   const { currentUser } = useAuth();
   const router = useRouter();
-  const [bookings, setBookings] = useState([]);
+  const [bookings, setBookings] = useState<Booking[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -21,7 +42,7 @@ export default function BookingHistory() {
     const loadBookings = async () => {
       try {
         const history = await getUserBookingHistory(currentUser.uid);
-        setBookings(history);
+        setBookings(history as Booking[]);
       } catch (error) {
         console.error("Error loading booking history:", error);
       } finally {
@@ -31,6 +52,16 @@ export default function BookingHistory() {
 
     loadBookings();
   }, [currentUser, router]);
+
+  // Helper function to format dates
+  const formatDate = (date: Date | FirestoreTimestamp): string => {
+    if (date instanceof Date) {
+      return date.toLocaleString();
+    } else if (date && typeof date.toDate === "function") {
+      return date.toDate().toLocaleString();
+    }
+    return "Unknown date";
+  };
 
   if (!currentUser) return null;
 
@@ -82,7 +113,7 @@ export default function BookingHistory() {
                         {booking.expert?.name || "Expert"}
                       </h3>
                       <p className="text-sm text-gray-500 dark:text-gray-400">
-                        {new Date(booking.createdAt.toDate()).toLocaleString()}
+                        {formatDate(booking.createdAt)}
                       </p>
                     </div>
                   </div>

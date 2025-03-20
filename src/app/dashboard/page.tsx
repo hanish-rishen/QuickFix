@@ -1,42 +1,65 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "../../../contexts/AuthContext";
 import { getUserRecentBookings } from "../../../lib/firestoreService";
 import Link from "next/link";
 import { logoutUser } from "../../../lib/firebaseAuth";
 
+// Define booking interface to fix type errors
+interface Expert {
+  name?: string;
+  hourlyRate?: number;
+}
+
+// Refine the createdAt type to properly handle Firestore timestamps
+interface FirestoreTimestamp {
+  toDate(): Date;
+}
+
+interface Booking {
+  id: string;
+  userId: string;
+  expertId: string;
+  serviceType: string;
+  status: "pending" | "completed" | "cancelled";
+  createdAt: Date | FirestoreTimestamp; // Update this to explicitly handle both types
+  amount: number;
+  expert?: Expert | null;
+}
+
 export default function Dashboard() {
   const { currentUser } = useAuth();
   const router = useRouter();
-  const [recentBookings, setRecentBookings] = useState([]);
+  const [recentBookings, setRecentBookings] = useState<Booking[]>([]);
   const [loading, setLoading] = useState(true);
   const [bookingError, setBookingError] = useState("");
 
-  useEffect(() => {
-    const loadRecentBookings = async () => {
-      if (currentUser) {
-        try {
-          setLoading(true);
-          console.log("Loading bookings for user:", currentUser.uid);
-          const bookings = await getUserRecentBookings(currentUser.uid, 5);
-          console.log("Fetched bookings:", bookings);
-          setRecentBookings(bookings);
-          setBookingError("");
-        } catch (error) {
-          console.error("Error loading bookings:", error);
-          setBookingError("Failed to load your recent bookings");
-        } finally {
-          setLoading(false);
-        }
+  // Define loadRecentBookings as a callback function to fix reference error
+  const loadRecentBookings = useCallback(async () => {
+    if (currentUser) {
+      try {
+        setLoading(true);
+        console.log("Loading bookings for user:", currentUser.uid);
+        const bookings = await getUserRecentBookings(currentUser.uid, 5);
+        console.log("Fetched bookings:", bookings);
+        setRecentBookings(bookings as Booking[]);
+        setBookingError("");
+      } catch (error) {
+        console.error("Error loading bookings:", error);
+        setBookingError("Failed to load your recent bookings");
+      } finally {
+        setLoading(false);
       }
-    };
+    }
+  }, [currentUser]);
 
+  useEffect(() => {
     if (currentUser) {
       loadRecentBookings();
     }
-  }, [currentUser]);
+  }, [currentUser, loadRecentBookings]);
 
   useEffect(() => {
     if (!currentUser) {
@@ -178,7 +201,7 @@ export default function Dashboard() {
                 <div className="text-center py-6">
                   <p className="text-red-500">{bookingError}</p>
                   <button
-                    onClick={() => loadRecentBookings()}
+                    onClick={loadRecentBookings}
                     className="mt-2 text-blue-600 hover:underline"
                   >
                     Retry
@@ -202,13 +225,7 @@ export default function Dashboard() {
                             {booking.expert?.name || "Expert"}
                           </h3>
                           <p className="text-sm text-gray-500 dark:text-gray-400">
-                            {booking.createdAt?.toDate
-                              ? new Date(
-                                  booking.createdAt.toDate()
-                                ).toLocaleDateString()
-                              : new Date(
-                                  booking.createdAt
-                                ).toLocaleDateString()}
+                            {formatDate(booking.createdAt)}
                           </p>
                           <p className="text-xs text-gray-400">
                             {booking.serviceType} • ₹
@@ -248,4 +265,14 @@ export default function Dashboard() {
       </main>
     </div>
   );
+}
+
+// Add a helper function to format dates correctly
+function formatDate(date: Date | FirestoreTimestamp): string {
+  if (date instanceof Date) {
+    return date.toLocaleDateString();
+  } else if (date && typeof date.toDate === "function") {
+    return date.toDate().toLocaleDateString();
+  }
+  return "Unknown date";
 }

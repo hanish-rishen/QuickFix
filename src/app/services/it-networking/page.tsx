@@ -18,6 +18,22 @@ const MapComponent = dynamic(
   }
 );
 
+// Define Expert interface to fix type errors
+interface Expert {
+  id: string;
+  name: string;
+  specialties: string[];
+  rating: number;
+  reviews: number;
+  hourlyRate: number;
+  location: string;
+  latitude: number;
+  longitude: number;
+  distance: number;
+  arrivalTime: string;
+  available: boolean;
+}
+
 export default function ITNetworkingPage() {
   const { currentUser } = useAuth();
   const [userLocation, setUserLocation] = useState<{
@@ -26,8 +42,9 @@ export default function ITNetworkingPage() {
   } | null>(null);
   const [loadingExperts, setLoadingExperts] = useState(true);
   const [sortBy, setSortBy] = useState("distance");
-  const [experts, setExperts] = useState([]);
-  const [filteredExperts, setFilteredExperts] = useState([]);
+  // Fix type errors by properly typing the state
+  const [experts, setExperts] = useState<Expert[]>([]);
+  const [filteredExperts, setFilteredExperts] = useState<Expert[]>([]);
   const [selectedExpert, setSelectedExpert] = useState<string | null>(null);
   const [errorMsg, setErrorMsg] = useState("");
   const [mapVisible, setMapVisible] = useState(true);
@@ -67,11 +84,11 @@ export default function ITNetworkingPage() {
                   defaultLocation.longitude,
                   50
                 );
-                setExperts(defaultExperts);
-                setFilteredExperts(defaultExperts);
+                setExperts(defaultExperts as Expert[]);
+                setFilteredExperts(defaultExperts as Expert[]);
               } else {
-                setExperts(nearbyExperts);
-                setFilteredExperts(nearbyExperts);
+                setExperts(nearbyExperts as Expert[]);
+                setFilteredExperts(nearbyExperts as Expert[]);
               }
             },
             async (error) => {
@@ -87,8 +104,8 @@ export default function ITNetworkingPage() {
                 defaultLocation.longitude,
                 50
               );
-              setExperts(defaultExperts);
-              setFilteredExperts(defaultExperts);
+              setExperts(defaultExperts as Expert[]);
+              setFilteredExperts(defaultExperts as Expert[]);
             }
           );
         } else {
@@ -102,8 +119,8 @@ export default function ITNetworkingPage() {
             defaultLocation.longitude,
             50
           );
-          setExperts(defaultExperts);
-          setFilteredExperts(defaultExperts);
+          setExperts(defaultExperts as Expert[]);
+          setFilteredExperts(defaultExperts as Expert[]);
         }
       } catch (error) {
         console.error("Error fetching experts:", error);
@@ -160,7 +177,7 @@ export default function ITNetworkingPage() {
     const specialtiesSet = new Set<string>();
     experts.forEach((expert) => {
       if (expert.specialties) {
-        expert.specialties.forEach((specialty) => {
+        expert.specialties.forEach((specialty: string) => {
           specialtiesSet.add(specialty);
         });
       }
@@ -294,19 +311,21 @@ export default function ITNetworkingPage() {
           }`}
         >
           <div className="h-64 md:h-80">
-            <MapComponent
-              userLocation={userLocation}
-              expertLocation={
-                selectedExpertDetails
-                  ? {
-                      latitude: selectedExpertDetails.latitude,
-                      longitude: selectedExpertDetails.longitude,
-                      name: selectedExpertDetails.name,
-                      eta: selectedExpertDetails.arrivalTime,
-                    }
-                  : undefined
-              }
-            />
+            {userLocation && (
+              <MapComponent
+                userLocation={userLocation}
+                expertLocation={
+                  selectedExpertDetails
+                    ? {
+                        latitude: selectedExpertDetails.latitude,
+                        longitude: selectedExpertDetails.longitude,
+                        name: selectedExpertDetails.name,
+                        eta: selectedExpertDetails.arrivalTime,
+                      }
+                    : undefined
+                }
+              />
+            )}
           </div>
 
           {selectedExpertDetails && (
@@ -592,14 +611,16 @@ export default function ITNetworkingPage() {
                     {/* Specialties */}
                     <div className="mt-3">
                       <div className="flex flex-wrap gap-1.5">
-                        {expert.specialties.map((specialty, index) => (
-                          <span
-                            key={index}
-                            className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-200"
-                          >
-                            {specialty}
-                          </span>
-                        ))}
+                        {expert.specialties.map(
+                          (specialty: string, index: number) => (
+                            <span
+                              key={index}
+                              className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-200"
+                            >
+                              {specialty}
+                            </span>
+                          )
+                        )}
                         <span className="text-xs text-gray-500 ml-1">
                           +{expert.reviews} reviews
                         </span>

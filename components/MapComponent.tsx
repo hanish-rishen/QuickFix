@@ -97,10 +97,10 @@ const MapComponent = ({ userLocation, expertLocation }: MapComponentProps) => {
           iconAnchor: [12, 12],
         });
 
-        const expertMarker = L.marker(
-          [expertLocation.latitude, expertLocation.longitude],
-          { icon: expertIcon }
-        )
+        // Create expert marker but no need to store the reference since we don't use it later
+        L.marker([expertLocation.latitude, expertLocation.longitude], {
+          icon: expertIcon,
+        })
           .addTo(map)
           .bindPopup(`${expertLocation.name}<br/>ETA: ${expertLocation.eta}`);
 
@@ -110,16 +110,20 @@ const MapComponent = ({ userLocation, expertLocation }: MapComponentProps) => {
           L.latLng(expertLocation.latitude, expertLocation.longitude),
         ];
 
-        // @ts-ignore - Types not available for routing machine
-        L.Routing.control({
+        // Use a proper type assertion instead of 'any'
+        const routingControl = L.Routing.control({
           waypoints,
           show: false,
           addWaypoints: false,
           routeWhileDragging: false,
           lineOptions: {
             styles: [{ color: "#3B82F6", weight: 3 }],
+            extendToWaypoints: true,
+            missingRouteTolerance: 0,
           },
-        }).addTo(map);
+        }) as unknown as L.Routing.Control;
+
+        routingControl.addTo(map);
 
         // Fit bounds to show both markers
         const bounds = L.latLngBounds(waypoints);

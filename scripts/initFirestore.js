@@ -1,14 +1,18 @@
 import { getFirestore, collection, doc, setDoc } from "firebase/firestore";
 import { initializeApp } from "firebase/app";
+import * as dotenv from "dotenv";
 
-// Direct configuration instead of using env vars for initialization script
+// Load environment variables from .env.local
+dotenv.config({ path: ".env.local" });
+
+// Use environment variables for configuration
 const firebaseConfig = {
-  apiKey: "AIzaSyB75HHdinpdGi0M4ga48jwsK-dr1sPUE4I",
-  authDomain: "quickfix-8f683.firebaseapp.com",
-  projectId: "quickfix-8f683",
-  storageBucket: "quickfix-8f683.appspot.com",
-  messagingSenderId: "362540723621",
-  appId: "1:362540723621:web:a8820497ea62ce90758c4c",
+  apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
+  authDomain: process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN,
+  projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID,
+  storageBucket: process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET,
+  messagingSenderId: process.env.NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID,
+  appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID,
 };
 
 // Initialize Firebase

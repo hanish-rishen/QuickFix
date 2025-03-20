@@ -44,7 +44,12 @@ export const generateIndianName = () => {
   return `${firstName} ${lastName}`;
 };
 
-const cityLocalities = {
+// Define an interface to enforce type safety for the cities and localities
+interface CityLocalities {
+  [city: string]: string[];
+}
+
+const cityLocalities: CityLocalities = {
   Mumbai: ["Bandra", "Andheri", "Juhu", "Powai", "Worli", "Colaba"],
   Delhi: ["Hauz Khas", "Connaught Place", "Dwarka", "Rohini", "Saket"],
   Bangalore: ["Indiranagar", "Koramangala", "HSR Layout", "Whitefield"],
